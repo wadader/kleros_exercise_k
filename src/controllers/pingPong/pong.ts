@@ -80,6 +80,30 @@ export class Pong {
     }
   };
 
+
+
+  private async getTransactionOptions(
+    publicClient: PublicClient,
+    nonceOfLatestPong: number,
+    i: number,
+    lowGasRetryCount: number
+  ) {
+    const adjustedFeeValues = await this.getAdjustedFeeValues(
+      lowGasRetryCount,
+      publicClient
+    );
+
+    return adjustedFeeValues
+      ? {
+          nonce: nonceOfLatestPong + i + 1,
+          maxPriorityFeePerGas: adjustedFeeValues.maxPriorityFeePerGas,
+          maxFeePerGas: adjustedFeeValues.maxFeePerGas,
+        }
+      : {
+          nonce: nonceOfLatestPong + i + 1,
+        };
+  }
+
   private getAdjustedFeeValues = async (
     lowGasRetryCount: number,
     publicClient: PublicClient
@@ -105,28 +129,6 @@ export class Pong {
 
     return adjustedFeeValues;
   };
-
-  private async getTransactionOptions(
-    publicClient: PublicClient,
-    nonceOfLatestPong: number,
-    i: number,
-    lowGasRetryCount: number
-  ) {
-    const adjustedFeeValues = await this.getAdjustedFeeValues(
-      lowGasRetryCount,
-      publicClient
-    );
-
-    return adjustedFeeValues
-      ? {
-          nonce: nonceOfLatestPong + i + 1,
-          maxPriorityFeePerGas: adjustedFeeValues.maxPriorityFeePerGas,
-          maxFeePerGas: adjustedFeeValues.maxFeePerGas,
-        }
-      : {
-          nonce: nonceOfLatestPong + i + 1,
-        };
-  }
 
   // actually increases by a little more than 10%/retry
   private increaseByTenPercentPerRetry = (
