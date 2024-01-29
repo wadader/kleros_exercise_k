@@ -1,22 +1,21 @@
 import { PublicClient, WalletClient, getContract } from "viem";
 import { PINGPONG_ABI } from "../../artifacts/pingPongAbi";
 import { getPongerClient, getPublicClient } from "../../config/ethClients";
-import { EthAddress, areEthereumHashesEqual } from "../../types/web3";
+import { areEthereumHashesEqual } from "../../types/web3";
 import { Ping, PingEvents } from "./ping";
 import { Pong, PongDetails, PongEvents } from "./pong";
 import { getBlockNumber } from "viem/actions";
+import { PingPongEnv } from "../../config/types";
 
 export class PingPong {
   constructor(
     ALCHEMY_KEY: string,
-    PINGPONG_ADDRESS: EthAddress,
-    PONGER_PRIVATE_KEY: string,
-    PINGPONG_STARTING_BLOCK: number
+    { PINGPONG_ADDRESS, PINGPONG_STARTING_BLOCK, PONGER_KEY }: PingPongEnv
   ) {
     console.log("constructing PingPong");
 
     const publicClient = getPublicClient(ALCHEMY_KEY);
-    const pongerClient = getPongerClient(PONGER_PRIVATE_KEY, ALCHEMY_KEY);
+    const pongerClient = getPongerClient(PONGER_KEY, ALCHEMY_KEY);
 
     const contractClient = {
       public: publicClient,
