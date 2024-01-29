@@ -1,9 +1,9 @@
 import { PublicClient, WalletClient, getContract } from "viem";
 import { PINGPONG_ABI } from "../../artifacts/pingPongAbi";
 import { getPongerClient, getPublicClient } from "../../config/ethClients";
-import { EthAddress } from "../../types/web3";
+import { EthAddress, areEthereumHashesEqual } from "../../types/web3";
 import { Ping, PingEvents } from "./ping";
-import { Pong, PongEvents } from "./pong";
+import { Pong, PongDetails, PongEvents } from "./pong";
 
 export class PingPong {
   constructor(
@@ -47,6 +47,36 @@ export class PingPong {
     ]);
 
     return { pingEvents, pongEvents };
+  };
+
+  private getUnpongedPings = async (
+    { pingEvents, pongEvents }: PingPongEvents,
+    myPongDetails: PongDetails
+  ): Promise<PingEvents> => {
+    const myPongEvents = this.pong.filterOutOthersPongEvents(
+      pongEvents,
+      myPongDetails
+    );
+
+    const unPongedPingEventsInteral = this.filterOutPonged(
+      pingEvents,
+      myPongEvents
+    );
+
+    return unPongedPingEventsInteral;
+  }
+
+  private filterOutPonged = (
+    pingEvents: PingEvents,
+    myPongEvents: PongEvents
+  ) => {
+    const unPongedPingEventsInteral = pingEvents.filter((pingEvent) => {
+      const isPonged = myPongEvents.some((myPongEvent) =>
+        areEthereumHashesEqual(myPongEvent.data, pingEvent.transactionHash)
+      );
+      return !isPonged;
+    });
+    return unPongedPingEventsInteral;
   };
 
 }

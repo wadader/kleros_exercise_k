@@ -1,5 +1,6 @@
 import { PublicClient, WalletClient, isAddressEqual } from "viem";
 import { ContractClient, PingPongContract } from "./pingPong";
+import { areEthereumHashesEqual } from "../../types/web3";
 
 export class Pong {
   constructor(_pingPongContract: PingPongContract) {
@@ -26,6 +27,19 @@ export class Pong {
 
     return myPongDetails;
   };
+
+  filterOutOthersPongEvents = (
+    pongEvents: PongEvents,
+    myPongDetails: PongDetails
+  ): PongEvents => {
+    const myPongEvents = pongEvents.filter((pongEvent) =>
+      myPongDetails.some((myPongDetail) =>
+        areEthereumHashesEqual(pongEvent.transactionHash, myPongDetail.hash)
+      )
+    );
+    return myPongEvents;
+  };
+
 
   private getAllDetails = async (
     pongEvents: PongEvents,
