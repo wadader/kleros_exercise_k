@@ -1,6 +1,7 @@
 import { PublicClient, WalletClient, isAddressEqual } from "viem";
 import { ContractClient, PingPongContract } from "./pingPong";
-import { areEthereumHashesEqual } from "../../types/web3";
+import { Hash, areEthereumHashesEqual } from "../../types/web3";
+import { estimateFeesPerGas } from "viem/actions";
 
 export class Pong {
   constructor(_pingPongContract: PingPongContract) {
@@ -40,6 +41,157 @@ export class Pong {
     return myPongEvents;
   };
 
+  private executePong = async (
+    _pingTxHash: Hash,
+    publicClient: PublicClient,
+    nonceOfLatestPong: number,
+    i: number,
+    { retryExponent, lowGasRetryCount }: PongRetryParams
+  ) => {
+    try {
+      const pongArgs = [_pingTxHash, true] as const;
+
+      const txOptions = await this.getTransactionOptions(
+        publicClient,
+        nonceOfLatestPong,
+        i,
+        lowGasRetryCount
+      );
+
+      const pongTxHash = await this.contract.write.pong(pongArgs, txOptions);
+
+      console.log("pongTxHash:", pongTxHash);
+    } catch (e) {
+      console.log("executePong-error:", e);
+
+      const retryArgs: PongRetryParams = {
+        retryExponent: retryExponent + 1,
+        lowGasRetryCount,
+      };
+
+      this.handlePongError(
+        e,
+        _pingTxHash,
+        publicClient,
+        nonceOfLatestPong,
+        i,
+        retryArgs
+      );
+    }
+  };
+
+  private getAdjustedFeeValues = async (
+    lowGasRetryCount: number,
+    publicClient: PublicClient
+  ) => {
+    const feeValues = lowGasRetryCount
+      ? await estimateFeesPerGas(publicClient)
+      : undefined;
+
+    let adjustedFeeValues;
+
+    if (feeValues) {
+      adjustedFeeValues = {
+        maxFeePerGas: this.increaseByTenPercentPerRetry(
+          feeValues.maxFeePerGas,
+          lowGasRetryCount
+        ),
+        maxPriorityFeePerGas: this.increaseByTenPercentPerRetry(
+          feeValues.maxPriorityFeePerGas,
+          lowGasRetryCount
+        ),
+      };
+    }
+
+    return adjustedFeeValues;
+  };
+
+  private async getTransactionOptions(
+    publicClient: PublicClient,
+    nonceOfLatestPong: number,
+    i: number,
+    lowGasRetryCount: number
+  ) {
+    const adjustedFeeValues = await this.getAdjustedFeeValues(
+      lowGasRetryCount,
+      publicClient
+    );
+
+    return adjustedFeeValues
+      ? {
+          nonce: nonceOfLatestPong + i + 1,
+          maxPriorityFeePerGas: adjustedFeeValues.maxPriorityFeePerGas,
+          maxFeePerGas: adjustedFeeValues.maxFeePerGas,
+        }
+      : {
+          nonce: nonceOfLatestPong + i + 1,
+        };
+  }
+
+  // actually increases by a little more than 10%/retry
+  private increaseByTenPercentPerRetry = (
+    fee: bigint,
+    lowGasRetryCount: number
+  ) => {
+    return BigInt(Math.floor(Number(fee) * (1 + lowGasRetryCount / 9.9)));
+  };
+
+  private handlePongError(
+    error: unknown,
+    pingTxHash: Hash,
+    publicClient: PublicClient,
+    nonceOfLatestBlock: number,
+    index: number,
+    { lowGasRetryCount, retryExponent }: PongRetryParams
+  ): void {
+    console.log("Error in executePong:", error);
+
+    const isLowGasError = this.isLowGasError(error);
+    const updatedLowGasRetryCount = isLowGasError
+      ? lowGasRetryCount + 1
+      : lowGasRetryCount;
+
+    const retryTime = this.calculateRetryTime(retryExponent);
+
+    setTimeout(() => {
+      this.executePong(pingTxHash, publicClient, nonceOfLatestBlock, index, {
+        retryExponent: retryExponent + 1,
+        lowGasRetryCount: updatedLowGasRetryCount,
+      });
+    }, retryTime);
+  }
+
+  private calculateRetryTime(retryExponent: number): number {
+    //  retry with increasing intervals for failure
+    // * https://docs.alchemy.com/reference/throughput#option-4-exponential-backoff
+    const baseWaitTimeInMs = 2 ** retryExponent * 1000;
+    return Math.min(baseWaitTimeInMs + getRandomMilliseconds(), MAX_BACKOFF);
+  }
+
+  getLatestPongedNonce(myPongDetails: PongDetails): number {
+    let latestNonce = -1;
+
+    myPongDetails.forEach((pong) => {
+      if (
+        pong.nonce &&
+        typeof pong.nonce === "number" &&
+        pong.nonce > latestNonce
+      )
+        latestNonce = pong.nonce;
+    });
+
+    return latestNonce;
+  }
+
+  private isLowGasError(error: unknown): boolean {
+    if (typeof error === "object" && error !== null && "details" in error) {
+      const errorDetails = (error as { details: unknown }).details;
+      return (
+        typeof errorDetails === "string" && errorDetails === replacementTxDetail
+      );
+    }
+    return false;
+  }
 
   private getAllDetails = async (
     pongEvents: PongEvents,
@@ -62,5 +214,19 @@ export class Pong {
   contract: PingPongContract;
 }
 
+const replacementTxDetail = "replacement transaction underpriced";
+
+function getRandomMilliseconds(): number {
+  return Math.floor(Math.random() * 1001);
+}
+
+const SIXTY_FOUR_SECONDS_IN_MS = 64_000;
+const MAX_BACKOFF = SIXTY_FOUR_SECONDS_IN_MS;
+
 export type PongEvents = Awaited<ReturnType<Pong["fetchEvents"]>>;
 export type PongDetails = Awaited<ReturnType<Pong["getAllDetails"]>>;
+
+interface PongRetryParams {
+  retryExponent: number;
+  lowGasRetryCount: number;
+}
