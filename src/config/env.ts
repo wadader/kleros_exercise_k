@@ -37,7 +37,7 @@ export class Env_Vars {
     const GoerliOrSepoliaString = envArgs.pingPongEnv.GOERLI_OR_SEPOLIA;
     if (!GoerliOrSepoliaString) throw "GOERLI_OR_SEPOLIA not defined in env";
     if (!isGoerliOrSepolia(GoerliOrSepoliaString))
-      throw "Not GOERLI or SEPOLIA";
+      throw "Not GOERLI or SEPOLIA in env. Check case";
 
     this.PingPong = {
       PONGER_KEY: envArgs.pingPongEnv.PONGER_KEY,
