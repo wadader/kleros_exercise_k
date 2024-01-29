@@ -4,6 +4,7 @@ import {
   AppEnv,
   EnvClassConstructorArgs,
   PingPongEnv,
+  isGoerliOrSepolia,
 } from "./types";
 import * as dotenv from "dotenv"; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 
@@ -18,7 +19,8 @@ export class Env_Vars {
     if (isNaN(this.App.BACKEND_PORT))
       throw "BACKEND_PORT does not seem like a number";
 
-    if (!envArgs.alchemyEnv.ALCHEMY_KEY) throw "Alchemy API_KEY not defined in env";
+    if (!envArgs.alchemyEnv.ALCHEMY_KEY)
+      throw "Alchemy API_KEY not defined in env";
 
     this.Alchemy = {
       ALCHEMY_KEY: envArgs.alchemyEnv.ALCHEMY_KEY,
@@ -32,12 +34,18 @@ export class Env_Vars {
     if (!envArgs.pingPongEnv.PINGPONG_STARTING_BLOCK)
       throw "PING_PONG_STARTING_BLOCK not defined in env";
 
+    const GoerliOrSepoliaString = envArgs.pingPongEnv.GOERLI_OR_SEPOLIA;
+    if (!GoerliOrSepoliaString) throw "GOERLI_OR_SEPOLIA not defined in env";
+    if (!isGoerliOrSepolia(GoerliOrSepoliaString))
+      throw "Not Goerli or Sepolia";
+
     this.PingPong = {
       PONGER_KEY: envArgs.pingPongEnv.PONGER_KEY,
       PINGPONG_ADDRESS: envArgs.pingPongEnv.PINGPONG_ADDRESS,
       PINGPONG_STARTING_BLOCK: Number(
         envArgs.pingPongEnv.PINGPONG_STARTING_BLOCK
       ),
+      GOERLI_OR_SEPOLIA: GoerliOrSepoliaString,
     };
 
     if (isNaN(this.PingPong.PINGPONG_STARTING_BLOCK))

@@ -1,6 +1,7 @@
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia, goerli } from "viem/chains";
+import { env_Vars } from "./init";
 
 const CHAINS = {
   sepolia: {
@@ -15,15 +16,18 @@ const CHAINS = {
   },
 } as const;
 
-const selectedChain = CHAINS.goerli;
+const selectedChain =
+  env_Vars.PingPong.GOERLI_OR_SEPOLIA === "Goerli"
+    ? CHAINS.goerli
+    : CHAINS.sepolia;
 
 export const getPublicClient = (_alchemyKey: string) =>
   createPublicClient({
     chain: selectedChain.viemChain,
     transport: selectedChain.getHttpSocketUrl(_alchemyKey),
-    // batch: {
-    //   multicall: true,
-    // },
+    batch: {
+      multicall: true,
+    },
   });
 
 const getPongerAccount = (_pongerPrivateKey: string) =>
