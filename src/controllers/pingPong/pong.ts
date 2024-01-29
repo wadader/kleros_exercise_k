@@ -66,7 +66,7 @@ export class Pong {
     { retryExponent, lowGasRetryCount }: PongRetryParams
   ) => {
     try {
-      const pongArgs = [_pingTxHash, true] as const;
+      const pongArgs = [_pingTxHash] as const;
 
       const txOptions = await this.getTransactionOptions(
         publicClient,

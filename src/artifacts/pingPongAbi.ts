@@ -1,15 +1,6 @@
 export const PINGPONG_ABI = [
-  {
-    inputs: [],
-    stateMutability: "nonpayable",
-    type: "constructor",
-  },
-  {
-    anonymous: false,
-    inputs: [],
-    name: "Ping",
-    type: "event",
-  },
+  { inputs: [], stateMutability: "nonpayable", type: "constructor" },
+  { anonymous: false, inputs: [], name: "Ping", type: "event" },
   {
     anonymous: false,
     inputs: [
@@ -33,29 +24,12 @@ export const PINGPONG_ABI = [
   {
     inputs: [],
     name: "pinger",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
+    outputs: [{ internalType: "address", name: "", type: "address" }],
     stateMutability: "view",
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "_txHash",
-        type: "bytes32",
-      },
-      {
-        internalType: "bool",
-        name: "_shouldAccept",
-        type: "bool",
-      },
-    ],
+    inputs: [{ internalType: "bytes32", name: "_txHash", type: "bytes32" }],
     name: "pong",
     outputs: [],
     stateMutability: "nonpayable",
