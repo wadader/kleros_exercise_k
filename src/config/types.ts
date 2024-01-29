@@ -25,10 +25,10 @@ export interface EnvClassConstructorArgs {
   appEnv: OptionalStringProperties<AppEnv>;
 }
 
-export type GoerliOrSepolia = "Goerli" | "Sepolia";
+export type GoerliOrSepolia = "GOERLI" | "SEPOLIA";
 
 export function isGoerliOrSepolia(str: string): str is GoerliOrSepolia {
   return Boolean(
-    str && typeof str === "string" && (str === "Goerli" || str === "Sepolia")
+    str && typeof str === "string" && (str === "GOERLI" || str === "Sepolia")
   );
 }

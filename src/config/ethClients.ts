@@ -21,7 +21,7 @@ export const getPublicClient = (
   GoerliOrSepolia: GoerliOrSepolia
 ) => {
   const selectedChain =
-    GoerliOrSepolia === "Goerli" ? CHAINS.goerli : CHAINS.sepolia;
+    GoerliOrSepolia === "GOERLI" ? CHAINS.goerli : CHAINS.sepolia;
   return createPublicClient({
     chain: selectedChain.viemChain,
     transport: selectedChain.getHttpSocketUrl(_alchemyKey),
@@ -40,7 +40,7 @@ export const getPongerClient = (
   GoerliOrSepolia: GoerliOrSepolia
 ) => {
   const selectedChain =
-    GoerliOrSepolia === "Goerli" ? CHAINS.goerli : CHAINS.sepolia;
+    GoerliOrSepolia === "GOERLI" ? CHAINS.goerli : CHAINS.sepolia;
   return createWalletClient({
     account: getPongerAccount(_pongerPrivateKey),
     chain: selectedChain.viemChain,
