@@ -34,13 +34,35 @@ export class PingPong {
     this.pong = new Pong(this.contract);
 
     this.startingBlock = BigInt(PINGPONG_STARTING_BLOCK);
-    this.processPendingPings(contractClient);
+    this.processPendingPings(contractClient).then((initBlockNumber) => {
+      this.handlePingEvents(contractClient, initBlockNumber);
+    });
   }
 
   contract;
   ping: Ping;
   pong: Pong;
   startingBlock: bigint;
+
+  private handlePingEvents = async (
+    contractClient: ContractClient,
+    initBlockNumber: bigint
+  ) => {
+    console.log("listening for pings");
+    contractClient.public.watchBlockNumber({
+      onBlockNumber: async (_blockNumber) => {
+        if (_blockNumber) {
+          // * slight delay after init to make sure init blocks go through. Delay is at least two blocks but may be upto 5 blocks the very first time.
+          if (_blockNumber > initBlockNumber + 1n) {
+            // * two block delay after each time after that.
+            if (Number(_blockNumber) % 3 === 0) {
+              this.processPendingPings(contractClient);
+            }
+          }
+        }
+      },
+    });
+  };
 
   private processPendingPings = async (contractClient: ContractClient) => {
     const pingPongEventsObj = await this.fetchPingPongEvents(
