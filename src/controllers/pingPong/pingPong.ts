@@ -90,6 +90,7 @@ export class PingPong {
     );
 
     console.log("unpongedTxHashes:", unpongedTxHashes);
+    console.log("number of unpongedTxHashes", unpongedTxHashes.length);
 
     const nonceOfLatestPonged = this.pong.getLatestPongedNonce(myPongDetails);
 

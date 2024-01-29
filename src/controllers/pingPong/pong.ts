@@ -58,7 +58,6 @@ export class Pong {
     });
   };
 
-
   private executePong = async (
     _pingTxHash: Hash,
     publicClient: PublicClient,
@@ -97,8 +96,6 @@ export class Pong {
       );
     }
   };
-
-
 
   private async getTransactionOptions(
     publicClient: PublicClient,
@@ -166,8 +163,13 @@ export class Pong {
   ): void {
     console.log("Error in executePong:", error);
 
-    const isLowGasError = this.isLowGasError(error);
-    const updatedLowGasRetryCount = isLowGasError
+    // * in rare cases, tx has been mined but is still being processed on a subsequent check that overlapped with the original mining.
+    // * however, we will still not get duplicates as it is using the old, already mined nonce
+    const isNonceTooLow = this.isNonceTooLowError(error);
+    if (isNonceTooLow) return;
+
+    const isLowGas = this.isLowGasError(error);
+    const updatedLowGasRetryCount = isLowGas
       ? lowGasRetryCount + 1
       : lowGasRetryCount;
 
@@ -203,11 +205,23 @@ export class Pong {
     return latestNonce;
   }
 
+  private isNonceTooLowError = (error: unknown): boolean => {
+    if (typeof error === "object" && error !== null && "details" in error) {
+      const errorDetails = (error as { details: unknown }).details;
+      return (
+        typeof errorDetails === "string" &&
+        errorDetails.startsWith(txDetail.nonceTooLow)
+      );
+    }
+    return false;
+  };
+
   private isLowGasError(error: unknown): boolean {
     if (typeof error === "object" && error !== null && "details" in error) {
       const errorDetails = (error as { details: unknown }).details;
       return (
-        typeof errorDetails === "string" && errorDetails === replacementTxDetail
+        typeof errorDetails === "string" &&
+        errorDetails === txDetail.replacementTxDetail
       );
     }
     return false;
@@ -234,7 +248,10 @@ export class Pong {
   contract: PingPongContract;
 }
 
-const replacementTxDetail = "replacement transaction underpriced";
+const txDetail = {
+  replacementTxDetail: "replacement transaction underpriced",
+  nonceTooLow: "nonce too low:",
+} as const;
 
 function getRandomMilliseconds(): number {
   return Math.floor(Math.random() * 1001);
