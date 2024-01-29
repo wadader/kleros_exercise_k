@@ -12,7 +12,7 @@ const CHAINS = {
   goerli: {
     viemChain: goerli,
     getHttpSocketUrl: (_alchemyKey: string) =>
-      http(`https://eth-sepolia.g.alchemy.com/v2/${_alchemyKey}`),
+      http(`https://eth-goerli.g.alchemy.com/v2/${_alchemyKey}`),
   },
 } as const;
 
