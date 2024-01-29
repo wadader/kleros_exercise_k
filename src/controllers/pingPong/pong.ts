@@ -2,6 +2,7 @@ import { PublicClient, WalletClient, isAddressEqual } from "viem";
 import { ContractClient, PingPongContract } from "./pingPong";
 import { Hash, areEthereumHashesEqual } from "../../types/web3";
 import { estimateFeesPerGas } from "viem/actions";
+import { PingEvents } from "./ping";
 
 export class Pong {
   constructor(_pingPongContract: PingPongContract) {
@@ -40,6 +41,23 @@ export class Pong {
     );
     return myPongEvents;
   };
+
+  pongUnpongedPings = async (
+    unpongedPings: PingEvents,
+    nonceOfLatestBlock: number,
+    publicClient: PublicClient
+  ) => {
+    unpongedPings.forEach((unponged, i) => {
+      this.executePong(
+        unponged.transactionHash,
+        publicClient,
+        nonceOfLatestBlock,
+        i,
+        { retryExponent: 0, lowGasRetryCount: 0 }
+      );
+    });
+  };
+
 
   private executePong = async (
     _pingTxHash: Hash,
