@@ -15,7 +15,7 @@ const CHAINS = {
   },
 } as const;
 
-const selectedChain = CHAINS.sepolia;
+const selectedChain = CHAINS.goerli;
 
 export const getPublicClient = (_alchemyKey: string) =>
   createPublicClient({
