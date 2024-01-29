@@ -1,7 +1,6 @@
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia, goerli } from "viem/chains";
-import { env_Vars } from "./init";
 import { GoerliOrSepolia } from "./types";
 
 const CHAINS = {
