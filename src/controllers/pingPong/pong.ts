@@ -198,11 +198,7 @@ export class Pong {
     let latestNonce = -1;
 
     myPongDetails.forEach((pong) => {
-      if (
-        pong.nonce &&
-        typeof pong.nonce === "number" &&
-        pong.nonce > latestNonce
-      )
+      if (typeof pong.nonce === "number" && pong.nonce > latestNonce)
         latestNonce = pong.nonce;
     });
 
