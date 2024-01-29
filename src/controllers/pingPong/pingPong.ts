@@ -4,12 +4,14 @@ import { getPongerClient, getPublicClient } from "../../config/ethClients";
 import { EthAddress, areEthereumHashesEqual } from "../../types/web3";
 import { Ping, PingEvents } from "./ping";
 import { Pong, PongDetails, PongEvents } from "./pong";
+import { getBlockNumber } from "viem/actions";
 
 export class PingPong {
   constructor(
     ALCHEMY_KEY: string,
     PINGPONG_ADDRESS: EthAddress,
-    PONGER_PRIVATE_KEY: string
+    PONGER_PRIVATE_KEY: string,
+    PINGPONG_STARTING_BLOCK: number
   ) {
     console.log("constructing PingPong");
 
@@ -30,11 +32,56 @@ export class PingPong {
 
     this.ping = new Ping(this.contract);
     this.pong = new Pong(this.contract);
+
+    this.startingBlock = BigInt(PINGPONG_STARTING_BLOCK);
+    this.processPendingPings(contractClient);
   }
 
   contract;
   ping: Ping;
   pong: Pong;
+  startingBlock: bigint;
+
+  private processPendingPings = async (contractClient: ContractClient) => {
+    const pingPongEventsObj = await this.fetchPingPongEvents(
+      this.startingBlock
+    );
+
+    const myPongDetails = await this.pong.getMyDetails(
+      pingPongEventsObj.pongEvents,
+      contractClient
+    );
+
+    const unpongedPings = await this.getUnpongedPings(
+      pingPongEventsObj,
+      myPongDetails
+    );
+
+    //sort pings by ascending order
+    unpongedPings.sort((a, b) => {
+      return Number(a.blockNumber - b.blockNumber);
+    });
+
+    // remove in prod
+    const unpongedTxHashes = unpongedPings.map(
+      (unpongedPing) => unpongedPing.transactionHash
+    );
+
+    console.log("unpongedTxHashes:", unpongedTxHashes);
+
+    const nonceOfLatestPonged = this.pong.getLatestPongedNonce(myPongDetails);
+
+    await this.pong.pongUnpongedPings(
+      unpongedPings,
+      nonceOfLatestPonged,
+      contractClient.public
+    );
+
+    // * we wait a couple of blocks after the inital catch-up txs in order to let them process/fail. So we can check them in the listener
+    // * latestBlockNumber tracks this block number, so we can wait a couple block before permitting listener to act in handlePingEvents
+    const initBlockNumber = await getBlockNumber(contractClient.public);
+    return initBlockNumber;
+  };
 
   private fetchPingPongEvents = async (
     fromBlockNumber: bigint
@@ -64,7 +111,7 @@ export class PingPong {
     );
 
     return unPongedPingEventsInteral;
-  }
+  };
 
   private filterOutPonged = (
     pingEvents: PingEvents,
@@ -78,9 +125,7 @@ export class PingPong {
     });
     return unPongedPingEventsInteral;
   };
-
 }
-
 
 export type ContractClient = {
   public: PublicClient;
