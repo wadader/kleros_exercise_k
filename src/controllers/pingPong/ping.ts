@@ -5,11 +5,15 @@ export class Ping {
     this.contract = _pingPongContract;
   }
   fetchEvents = async (fromBlockNumber: bigint) => {
-    return await this.contract.getEvents.Ping({
-      fromBlock: fromBlockNumber,
-    });
+    try {
+      return await this.contract.getEvents.Ping({
+        fromBlock: fromBlockNumber,
+      });
+    } catch (e) {
+      console.error("ping-fetch-events-error:", e);
+    }
   };
   contract: PingPongContract;
 }
 
-export type PingEvents = Awaited<ReturnType<Ping["fetchEvents"]>>;
+export type PingEvents = NonNullable<Awaited<ReturnType<Ping["fetchEvents"]>>>;

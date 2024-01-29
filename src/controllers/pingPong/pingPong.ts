@@ -46,14 +46,18 @@ export class PingPong {
 
   private handlePingEvents = async (
     contractClient: ContractClient,
-    initBlockNumber: bigint
+    initBlockNumber: bigint | undefined
   ) => {
     console.log("listening for pings");
     contractClient.public.watchBlockNumber({
       onBlockNumber: async (_blockNumber) => {
         if (_blockNumber) {
           // * slight delay after init to make sure init blocks go through. Delay is at least two blocks but may be upto 5 blocks the very first time.
-          if (_blockNumber > initBlockNumber + 1n) {
+          // * if initBlockNumber === undefined, probably means a network error during initialization. Start listening so when network resumes, you can catch up
+          if (
+            initBlockNumber === undefined ||
+            _blockNumber > initBlockNumber + 1n
+          ) {
             // * two block delay after each time after that.
             if (Number(_blockNumber) % 3 === 0) {
               this.processPendingPings(contractClient);
@@ -68,6 +72,8 @@ export class PingPong {
     const pingPongEventsObj = await this.fetchPingPongEvents(
       this.startingBlock
     );
+
+    if (!pingPongEventsObj) return;
 
     const myPongDetails = await this.pong.getMyDetails(
       pingPongEventsObj.pongEvents,
@@ -108,13 +114,16 @@ export class PingPong {
 
   private fetchPingPongEvents = async (
     fromBlockNumber: bigint
-  ): Promise<PingPongEvents> => {
+  ): Promise<PingPongEvents | undefined> => {
     const pingEventsPromise = this.ping.fetchEvents(fromBlockNumber);
     const pongEventsPromise = this.pong.fetchEvents(fromBlockNumber);
+
     const [pingEvents, pongEvents] = await Promise.all([
       pingEventsPromise,
       pongEventsPromise,
     ]);
+
+    if (!pingEvents || !pongEvents) return;
 
     return { pingEvents, pongEvents };
   };

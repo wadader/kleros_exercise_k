@@ -10,9 +10,13 @@ export class Pong {
   }
 
   fetchEvents = async (fromBlockNumber: bigint) => {
-    return await this.contract.getEvents.Pong({
-      fromBlock: fromBlockNumber,
-    });
+    try {
+      return await this.contract.getEvents.Pong({
+        fromBlock: fromBlockNumber,
+      });
+    } catch (e) {
+      console.error("pong-fetch-events-error:", e);
+    }
   };
 
   getMyDetails = async (
@@ -183,7 +187,7 @@ export class Pong {
     }, retryTime);
   }
 
-  private calculateRetryTime(retryExponent: number): number {
+  calculateRetryTime(retryExponent: number): number {
     //  retry with increasing intervals for failure
     // * https://docs.alchemy.com/reference/throughput#option-4-exponential-backoff
     const baseWaitTimeInMs = 2 ** retryExponent * 1000;
@@ -260,7 +264,7 @@ function getRandomMilliseconds(): number {
 const SIXTY_FOUR_SECONDS_IN_MS = 64_000;
 const MAX_BACKOFF = SIXTY_FOUR_SECONDS_IN_MS;
 
-export type PongEvents = Awaited<ReturnType<Pong["fetchEvents"]>>;
+export type PongEvents = NonNullable<Awaited<ReturnType<Pong["fetchEvents"]>>>;
 export type PongDetails = Awaited<ReturnType<Pong["getAllDetails"]>>;
 
 interface PongRetryParams {
