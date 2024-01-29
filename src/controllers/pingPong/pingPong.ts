@@ -10,12 +10,21 @@ import { PingPongEnv } from "../../config/types";
 export class PingPong {
   constructor(
     ALCHEMY_KEY: string,
-    { PINGPONG_ADDRESS, PINGPONG_STARTING_BLOCK, PONGER_KEY }: PingPongEnv
+    {
+      PINGPONG_ADDRESS,
+      PINGPONG_STARTING_BLOCK,
+      PONGER_KEY,
+      GOERLI_OR_SEPOLIA,
+    }: PingPongEnv
   ) {
     console.log("constructing PingPong");
 
-    const publicClient = getPublicClient(ALCHEMY_KEY);
-    const pongerClient = getPongerClient(PONGER_KEY, ALCHEMY_KEY);
+    const publicClient = getPublicClient(ALCHEMY_KEY, GOERLI_OR_SEPOLIA);
+    const pongerClient = getPongerClient(
+      PONGER_KEY,
+      ALCHEMY_KEY,
+      GOERLI_OR_SEPOLIA
+    );
 
     const contractClient = {
       public: publicClient,

@@ -12,6 +12,7 @@ export interface PingPongEnv {
   PONGER_KEY: string;
   PINGPONG_ADDRESS: EthAddress;
   PINGPONG_STARTING_BLOCK: number;
+  GOERLI_OR_SEPOLIA: GoerliOrSepolia;
 }
 
 type OptionalStringProperties<T> = {
@@ -22,4 +23,12 @@ export interface EnvClassConstructorArgs {
   alchemyEnv: OptionalStringProperties<AlchemyEnv>;
   pingPongEnv: OptionalStringProperties<PingPongEnv>;
   appEnv: OptionalStringProperties<AppEnv>;
+}
+
+export type GoerliOrSepolia = "Goerli" | "Sepolia";
+
+export function isGoerliOrSepolia(str: string): str is GoerliOrSepolia {
+  return Boolean(
+    str && typeof str === "string" && (str === "Goerli" || str === "Sepolia")
+  );
 }

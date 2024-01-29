@@ -9,7 +9,8 @@ const envArg: EnvClassConstructorArgs = {
   pingPongEnv: {
     PONGER_KEY: process.env.PONGER_KEY,
     PINGPONG_ADDRESS: process.env.PINGPONG_ADDRESS,
-    PINGPONG_STARTING_BLOCK: process.env.PINGPONG_STARTING_BLOCK
+    PINGPONG_STARTING_BLOCK: process.env.PINGPONG_STARTING_BLOCK,
+    GOERLI_OR_SEPOLIA: process.env.GoerliOrSepoliaString,
   },
   appEnv: {
     BACKEND_PORT: process.env.BACKEND_PORT,
