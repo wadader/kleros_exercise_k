@@ -22,8 +22,10 @@ export class Pong {
   getMyDetails = async (
     pongEvents: PongEvents,
     { public: publicClient, wallet: pongerClient }: ContractClient
-  ): Promise<PongDetails> => {
+  ): Promise<PongDetails | undefined> => {
     const pongDetailsArray = await this.getAllDetails(pongEvents, publicClient);
+
+    if (!pongDetailsArray) return;
 
     const pongerAddress = await this.getPongerAddress(pongerClient);
 
@@ -231,11 +233,25 @@ export class Pong {
     pongEvents: PongEvents,
     publicClient: PublicClient
   ) => {
-    return await Promise.all(
-      pongEvents.map((pong) =>
-        publicClient.getTransaction({ hash: pong.transactionHash })
-      )
-    );
+    try {
+      const allDetails = [];
+
+      const batchSize = 3;
+
+      for (let i = 0; i < pongEvents.length; i += batchSize) {
+        const batch = pongEvents.slice(i, i + batchSize);
+        const details = await Promise.all(
+          batch.map((pong) =>
+            publicClient.getTransaction({ hash: pong.transactionHash })
+          )
+        );
+        allDetails.push(...details);
+      }
+
+      return allDetails;
+    } catch (e) {
+      console.error("getAllDetails-error:", e);
+    }
   };
 
   private getPongerAddress = async (pongerClient: WalletClient) => {
@@ -261,7 +277,9 @@ const SIXTY_FOUR_SECONDS_IN_MS = 64_000;
 const MAX_BACKOFF = SIXTY_FOUR_SECONDS_IN_MS;
 
 export type PongEvents = NonNullable<Awaited<ReturnType<Pong["fetchEvents"]>>>;
-export type PongDetails = Awaited<ReturnType<Pong["getAllDetails"]>>;
+export type PongDetails = NonNullable<
+  Awaited<ReturnType<Pong["getAllDetails"]>>
+>;
 
 interface PongRetryParams {
   retryExponent: number;

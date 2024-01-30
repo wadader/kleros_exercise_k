@@ -81,12 +81,16 @@ export class PingPong {
       this.startingBlock
     );
 
+    // probably network error, try again next block
     if (!pingPongEventsObj) return;
 
     const myPongDetails = await this.pong.getMyDetails(
       pingPongEventsObj.pongEvents,
       contractClient
     );
+
+    // problem getting details, maybe network error, maybe rate limit. Try again later
+    if (!myPongDetails) return;
 
     const unpongedPings = await this.getUnpongedPings(
       pingPongEventsObj,
